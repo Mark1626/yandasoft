@@ -98,6 +98,7 @@ public:
             ASKAPASSERT(nz > order);
 
 
+            #ifdef HAVE_MPI
             if (comms.isMaster()) {
                 ASKAPLOG_INFO_STR(logger,"In = "<<infile <<", Out = "<<
                                       outfile <<", threshold = "<<threshold << ", order = "<< order);
@@ -157,7 +158,7 @@ public:
             if (comms.isMaster()) {
                 fits_padding(outfile);
             }
-
+            #endif
             // All wait for padding to be written
             //ASKAPLOG_INFO_STR(logger,"Waiting at barrier");
             comms.barrier();
