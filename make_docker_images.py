@@ -27,20 +27,34 @@
 # Copyright: CSIRO 2020
 #
 #------------------------------------------------------------------------------
-# SETTINGS
+# USER SETTINGS
 #
 # Set machine targets in the list below.
-# Currently, we target generic HPCs and Galaxy.
-#machine_targets = ["generic", "galaxy"]
+# Currently, we target generic HPCs and a specific HPC: Galaxy.
+# When a specific machine target is chosen, MPI target is ignored.
+# Choose one or both of this list of target.
+# machine_targets = ["generic", "galaxy"]
 machine_targets = ["generic"]
 
-# Set MPI implementations for "generic" machine in the list below.
-# Note that a specific machine already has its MPI specified.
-# A valid mpi target is either "mpich" or "openmpi-X.Y.Z", 
-# where X, Y and Z are version numbers (major, minor and revision).
-# Our current MPI targets:
-#mpi_targets = ["mpich", "openmpi-4.0.2", "openmpi-3.1.4", "openmpi-2.1.6", "openmpi-1.10.7"]
+# Set MPI implementations for generic machine in the list below.
+# Note that a specific machine requires no MPI specification.
+# The format of the MPI specification is:
+#     mpi_type[-X.Y.Z]
+# where
+# - mpi_type is either "mpich" or "openmpi".
+# - X, Y and Z are version numbers (major, minor and revision).
+# When the numbers are specified, MPI library will be built from source code.
+# When they are not, the default version from the base OS will be installed
+# using the simplest method (apt-get install).
+# Choose a subset (or all) of this complete list of targets:
+# mpi_targets = ["mpich", "mpich-3.3.2", "openmpi", "openmpi-4.0.2", "openmpi-3.1.4", "openmpi-2.1.6", "openmpi-1.10.7"]
+# mpi_targets = ["mpich", "mpich-3.3.2", "openmpi", "openmpi-4.0.4", "openmpi-3.1.6", "openmpi-2.1.6", "openmpi-1.10.7"]
 mpi_targets = ["mpich"]
+
+git_branch = "develop"
+# git_branch = "master"
+
+casacore_ver = "3.3.0"
 
 #------------------------------------------------------------------------------
 # TODO: Add logging
@@ -53,13 +67,29 @@ mpi_targets = ["mpich"]
 import sys
 import argparse
 import subprocess
+import re
+import os
 from pathlib import Path
 
-# Git repository of Yandasoft
+nproc_available = os.cpu_count()
+nproc = 1
+if nproc_available > 1:
+    nproc = nproc_available - 1
+print("nproc:", nproc)
+
+# Git repository of Yandasoft. 
+# No longer needed, as this is set directly downstream now.
 git_repository = "https://github.com/ATNF/yandasoft.git"
 
 # Header for all automatically generated Dockerfiles
 header = ("# This file is automatically created by " + __file__ + "\n")
+
+# MPI wrapper for g++
+cmake_cxx_compiler = "-DCMAKE_CXX_COMPILER=mpicxx"
+# cmake_cxx_compiler = "-DCMAKE_CXX_COMPILER=/usr/local/bin/mpiCC"
+
+mpi_dir = "/usr/local"
+MPI_COMPILE_FLAGS = "-I/usr/local/include -pthread"
 
 forbidden_chars_string = "?!@#$%^&* ;<>?|\"\a\b\f\n\r\t\v"
 forbidden_chars = list(forbidden_chars_string)
@@ -148,203 +178,355 @@ class DockerClass:
 
 
 
+def split_version_number(input_ver):
+    '''
+    Split a given version number in string into 3 integers.
+    '''
+    string_list = re.findall(r'\d+', input_ver)
+    if (len(string_list) == 3):
+        int_list = [int(x) for x in string_list]
+        return int_list
+    else:
+        return []
+
+
+def compose_version_number(int_list):
+    '''
+    Given a list of 3 integers, compose version number.
+    '''
+    if (len(int_list) == 3):
+        return (str(int_list[0]) + '.' + str(int_list[1]) + '.' + str(int_list[2]))
+    else:
+        return ""
+
+
 def get_mpi_type_and_version(mpi_name):
     '''
-    Given the full name of MPI, return the MPI type: mpich or openmpi
-    as well as the version.
+    Given the full name of MPI, return MPI type (mpich / openmpi)
+    as well as version.
+    When the version is not specified, the simplest version to install 
+    is chosen (ie. using "apt-get install").
+    Input should be in one of these formats:
+    - mpich
+    - openmpi
+    - mpich-X.Y.Z
+    - openmpi-X.Y.Z
+    Where "X.Y.Z" is version number.
     '''
+    length = len(mpi_name)
     if (type(mpi_name) == str):
-        if (len(mpi_name) > 5):
-            if (mpi_name[0:5] == "mpich"):
-                # MPICH with specified version number
-                return ("mpich", mpi_name[6:])
-            elif (mpi_name[0:8] == "openmpi-"):
-                # OpenMPI with specified version number
-                return ("openmpi", mpi_name[8:])
-            else:
-                raise ValueError("Illegal MPI name", mpi_name)
-        elif (len(mpi_name) == 5):
+        if (length < 5):
+            raise ValueError("MPI name is too short:", mpi_name)
+
+        elif (length == 5):
+            # Unspecified MPICH
             if (mpi_name == "mpich"):
-                # Generic MPICH (no version number)
                 return("mpich", "")
             else:
-                raise ValueError("Expecting mpich", mpi_name)
+                raise ValueError("Expecting mpich:", mpi_name)
+
+        elif (length == 6):
+            raise ValueError("Illegal MPI name:", mpi_name)
+
+        elif (length == 7):
+            # Unspecified OpenMPI
+            if (mpi_name == "openmpi"):
+                return("openmpi", "")
+            else:
+                raise ValueError("Expecting openmpi:", mpi_name)
+
         else:
-            raise ValueError("Illegal MPI name (too short)", mpi_name)
+            # Length > 7
+            if (mpi_name[0:5] == "mpich"):
+                # MPICH with specified version number
+                int_ver = split_version_number(mpi_name[6:])
+                if (len(int_ver) == 3):
+                    return ("mpich", compose_version_number(int_ver))
+                else:
+                    raise ValueError("Illegal mpich version:", mpi_name[6:])
+
+            elif (mpi_name[0:7] == "openmpi"):
+                # OpenMPI with specified version number
+                int_ver = split_version_number(mpi_name[8:])
+                if (len(int_ver) == 3):
+                    return ("openmpi", compose_version_number(int_ver))
+                else:
+                    raise ValueError("Illegal openmpi version:", mpi_name[8:])
+            else:
+                raise ValueError("Illegal MPI name:", mpi_name)
     else:
-        raise TypeError("MPI name is not a string", mpi_name)
-
-
-
-def convert_version_string_to_integer(ver_string, ver_int):
-    '''
-    Convert version number in string format to a list of 3 integer.
-    '''
-    # Note that some integer can be of multi-digits
-    # Get major version number
-    # Get minor version number
-    # Get revision number
-    # return a list of 3 integers
+        raise TypeError("MPI name is not a string:", mpi_name)
 
 
 
 def make_base_image(machine, mpi, prepend, append, actual):
     '''
     Make base image for components that are seldom changed:
-    base OS, upgrades, standard libraries and apps, Casacore and Casarest.
+    base OS, upgrades, standard libraries and apps, MPI, Casacore and Casarest.
     '''
-    cmake_ver = "3.15.7"
+    docker_target = DockerClass()
+
+    # First, make Dockerfile, which is composed of:
+    # - Common header
+    # - Base system part
+    # - Common top part
+    # - MPI part
+    # - Common bottom part
+
+    # Construct common top part
+
+    apt_install_part = (
+    "ENV DEBIAN_FRONTEND=\"noninteractive\"\n"
+    "RUN apt-get update \\\n"
+    "    && apt-get upgrade -y \\\n"
+    "    && apt-get autoremove -y \\\n"
+    "    && apt-get install -y"
+    )
+
+    # Applications to install, as packaged in the base system.
+    # Note that most have the default versions as set by the base system.
+    # TODO: Remove stuff that is not needed
+    apt_install_items = [
+    "g++",
+    "gfortran",
+    "m4",
+    "autoconf",
+    "automake",
+    "libtool",      
+    "flex",
+    "bison",
+    "make",
+    "libncurses5-dev",
+    "libreadline-dev",
+    "libopenblas-dev",        
+    "liblapacke-dev",
+    "libcfitsio-dev",
+    "wcslib-dev",
+    "libhdf5-serial-dev", 
+    "libfftw3-dev",
+    "libpython-dev", 
+    "python-pip",          
+    "python-numpy",
+    "python-scipy",
+    "libboost-python-dev", 
+    "libboost-dev",   
+    "libboost-filesystem-dev", 
+    "libboost-program-options-dev", 
+    "libboost-signals-dev",
+    "libboost-system-dev",  
+    "libboost-thread-dev",   
+    "libboost-regex-dev",  
+    "libcppunit-dev",  
+    "git",
+    "libffi-dev",     
+    "libgsl-dev",        
+    "liblog4cxx-dev", 
+    "patch",           
+    "subversion",          
+    "wget",     
+    "docker",       
+    "libxerces-c-dev",
+    "libcurl4-openssl-dev",
+    "xsltproc",
+    "gcovr",
+    "zeroc-ice-all-dev",
+    "zeroc-ice-all-runtime",
+    "libczmq-dev"]
+
+    for apt_install_item in apt_install_items:
+        apt_install_part += " \\\n" + "        " + apt_install_item
+    apt_install_part += " \n"
+    # apt_install_part += "    && rm -rf /var/lib/apt\n"
+
+    cmake_ver = "3.17.3"
     cmake_source = "cmake-" + cmake_ver + ".tar.gz"
 
+    cmake_cxx_flags = "-DCMAKE_CXX_FLAGS=\"" + MPI_COMPILE_FLAGS + "\" -DCMAKE_BUILD_TYPE=Release"
+
     common_top_part = (
-    "RUN apt-get update\n"
-    "RUN apt-get upgrade -y\n"
-    "RUN apt-get autoremove -y\n"
-    "RUN apt-get install -y build-essential\n"
-    "RUN apt-get install -y gfortran\n" 
-    "RUN apt-get install -y g++\n"
-    "RUN apt-get install -y libncurses5-dev\n"
-    "RUN apt-get install -y libreadline-dev\n"
-    "RUN apt-get install -y flex\n"
-    "RUN apt-get install -y bison\n"
-    "RUN apt-get install -y libopenblas-dev\n"        
-    "RUN apt-get install -y liblapacke-dev\n"
-    "RUN apt-get install -y libcfitsio-dev\n"
-    "RUN apt-get install -y wcslib-dev\n"
-    "RUN apt-get install -y libhdf5-serial-dev\n" 
-    "RUN apt-get install -y libfftw3-dev\n" 
-    "RUN apt-get install -y libpython3-dev\n" 
-    "RUN apt-get install -y libpython2.7-dev\n"
-    "RUN apt-get install -y python-pip\n"           
-    "RUN apt-get install -y python-numpy\n"
-    "RUN apt-get install -y python-scipy\n"
-    "RUN apt-get install -y libboost-python-dev\n" 
-    "RUN apt-get install -y libboost-dev\n"         
-    "RUN apt-get install -y libboost-filesystem-dev\n" 
-    "RUN apt-get install -y libboost-program-options-dev\n" 
-    "RUN apt-get install -y libboost-signals-dev\n"
-    "RUN apt-get install -y libboost-system-dev\n"  
-    "RUN apt-get install -y libboost-thread-dev\n"   
-    "RUN apt-get install -y libboost-regex-dev\n"  
-    "RUN apt-get install -y libcppunit-dev\n"   
-    "RUN apt-get install -y git\n"
-    "RUN apt-get install -y libffi-dev\n"     
-    "RUN apt-get install -y libgsl-dev\n"        
-    "RUN apt-get install -y liblog4cxx-dev\n"           
-    "RUN apt-get install -y make\n"
-    "RUN apt-get install -y patch\n"           
-    "RUN apt-get install -y subversion\n"          
-    "RUN apt-get install -y wget\n"          
-    "RUN apt-get install -y docker\n"       
-    "RUN apt-get install -y libxerces-c-dev\n"
-    "RUN apt-get install -y libcurl4-openssl-dev\n"
-    "# Make cmake from source\n"
+    apt_install_part +
+    "# Build the latest cmake\n"
     "RUN mkdir /usr/local/share/cmake\n"
     "WORKDIR /usr/local/share/cmake\n"
-    "RUN wget https://github.com/Kitware/CMake/releases/download/v" + cmake_ver + "/" + cmake_source + "\n"
-    "RUN tar -zxf " + cmake_source + "\n"
+    "RUN wget https://github.com/Kitware/CMake/releases/download/v" + cmake_ver + "/" + cmake_source + " \\\n"
+    "    && tar -zxf " + cmake_source + " \\\n"
+    "    && rm " + cmake_source + "\n"
     "WORKDIR /usr/local/share/cmake/cmake-" + cmake_ver + "\n"
-    "RUN ./bootstrap --system-curl\n"
-    "RUN make\n"
-    "RUN make install\n")
+    "RUN ./bootstrap --system-curl \\\n"
+    "    && make \\\n"
+    "    && make install\n"
+    )
 
     common_bottom_part = (
-    "RUN mkdir /usr/local/share/casacore\n"
-    "RUN mkdir /usr/local/share/casacore/data\n"
+    "# Build the latest measures\n"
+    "RUN mkdir /usr/local/share/casacore \\\n"
+    "    && mkdir /usr/local/share/casacore/data\n"
     "WORKDIR /usr/local/share/casacore/data\n"
-    "RUN wget ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar\n"
-    "RUN mv WSRT_Measures.ztar WSRT_Measures.tar.gz\n"
-    "RUN tar -zxf WSRT_Measures.tar.gz\n"
-    "RUN rm WSRT_Measures.tar.gz\n"
-    "RUN mkdir /var/lib/jenkins\n"
-    "RUN mkdir /var/lib/jenkins/workspace\n"
-    "WORKDIR /home\n"
-    "RUN git clone " + git_repository + "\n"
-    "WORKDIR /home/yandasoft\n"
-    "RUN ./build_all.sh -C \"-DDATA_DIR=/usr/local/share/casacore/data\"\n" 
-    "RUN ./build_all.sh -r\n")
+    "RUN wget ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar \\\n"
+    "    && mv WSRT_Measures.ztar WSRT_Measures.tar.gz \\\n"
+    "    && tar -zxf WSRT_Measures.tar.gz \\\n"
+    "    && rm WSRT_Measures.tar.gz \\\n"
+    "    && mkdir /var/lib/jenkins \\\n"
+    "    && mkdir /var/lib/jenkins/workspace \n"
+    "# Build casacore\n"
+    "WORKDIR /usr/local/share/casacore\n"
+    "RUN wget https://github.com/casacore/casacore/archive/v" + casacore_ver + ".tar.gz \\\n"
+    "    && tar -xzf v" + casacore_ver + ".tar.gz\\\n"
+    "    && rm v" + casacore_ver + ".tar.gz\n"
+    "WORKDIR /usr/local/share/casacore/casacore-" + casacore_ver + "\n"
+    "RUN mkdir build\n"
+    "WORKDIR build\n"
+    "RUN cmake " + cmake_cxx_compiler + " -DCMAKE_BUILD_TYPE=Release .. \\\n"
+    "    && make -j" + str(nproc) + " \\\n"
+    "    && make install\n"
+    "WORKDIR /usr/local/share/casacore/\n"
+    "RUN wget https://github.com/steve-ord/casarest/tarball/078f94e \\\n"
+    "    && tar -xvzf 078f94e \\\n"
+    "    && rm 078f94e\n"
+    "WORKDIR steve-ord-casarest-078f94e\n"
+    "RUN mkdir build\n"
+    "WORKDIR build\n"
+    "RUN cmake " + cmake_cxx_compiler + " -DCMAKE_BUILD_TYPE=Release .. \\\n"
+    "    && make -j" + str(nproc) + " \\\n"
+    "    && make install \n"
+    "WORKDIR /usr/local/share/casacore\n"
+    "RUN rm -rf casacore \\\n"
+    "    && rm -rf steve-ord-casarest-078f94e \\\n"
+    "    && apt-get clean \n"
+    "# Build LOFAR\n"
+    "WORKDIR /usr/local/share\n"
+    "RUN mkdir LOFAR\n"
+    "WORKDIR /usr/local/share/LOFAR\n"
+    "RUN git clone https://bitbucket.csiro.au/scm/askapsdp/lofar-common.git\n"
+    "WORKDIR /usr/local/share/LOFAR/lofar-common\n"
+    # "RUN git checkout " + git_branch + "\n"
+    "RUN mkdir build\n"
+    "WORKDIR /usr/local/share/LOFAR/lofar-common/build\n"
+    "RUN cmake " + cmake_cxx_compiler + " " + cmake_cxx_flags + " .. \\\n"
+    "    && make -j" + str(nproc) + " \\\n"
+    "    && make install\n"
+    "WORKDIR /usr/local/share/LOFAR\n"
+    "RUN git clone https://bitbucket.csiro.au/scm/askapsdp/lofar-blob.git\n"
+    "WORKDIR /usr/local/share/LOFAR/lofar-blob\n"
+    # "RUN git checkout " + git_branch + "\n"
+    "RUN mkdir build\n"
+    "WORKDIR /usr/local/share/LOFAR/lofar-blob/build\n"
+    "RUN cmake " + cmake_cxx_compiler + " " + cmake_cxx_flags + " .. \\\n"
+    "    && make -j" + str(nproc) + " \\\n"
+    "    && make install\n"
+    "# Set environment variables\n"
+    "ENV LD_LIBRARY_PATH=/home/install/lib:/usr/local/lib \n"
+    "ENV PATH=/home/install/bin:$PATH \n"
+    "# Put start-up message in .bashrc\n"
+    "RUN echo \"echo \" >> ~/.bashrc \n"
+    "RUN echo \"echo ================================================================================\" >> ~/.bashrc \n"
+    "RUN echo \"echo Welcome to Yandabase container for developers! \" >> ~/.bashrc \n"
+    "RUN echo \"echo Version x.y.z \" >> ~/.bashrc \n"
+    "RUN echo \"echo More information: \" >> ~/.bashrc \n"
+    "RUN echo \"echo https://confluence.csiro.au/display/ASDP/Containers+for+end+users+and+developers \" >> ~/.bashrc \n"
+    "RUN echo \"echo ================================================================================\" >> ~/.bashrc \n"
+    "# Protect user from accidental git execution\n"
+    "RUN echo \"alias git=\'echo DO NOT USE GIT INSIDE CONTAINER!\'\" >> ~/.bashrc \n"
+    # TODO: Switch to normal user here
+    "WORKDIR /home/\n"
+    )
 
+    # Construct MPI part
+    mpi_part = ""
     if machine == "generic":
-        base_system_part = ("FROM ubuntu:bionic\n")
-
+        base_system_part = ("FROM ubuntu:bionic as buildenv\n")
         (mpi_type, mpi_ver) = get_mpi_type_and_version(mpi)
 
         if (mpi_type == "mpich"):
             if (mpi_ver == ""):
-                # if MPICH version is not specified, get the precompiled generic version
-                mpi_part = "RUN apt-get install -y mpich\n"
+                # if MPICH version is not specified, get the precompiled version
+                mpi_part = (
+                "RUN apt-get install -y libmpich-dev \n"
+                # "    && rm -rf /var/lib/apt\n"
+                )
 
             else:
                 # else (if version is specified), download the source from website and build           
-                mpich_dir = "https://www.mpich.org/static/downloads/" + mpi_ver
+                web_dir = "https://www.mpich.org/static/downloads/" + mpi_ver
 
                 # TODO: Check whether the version is correct and the file exists
 
                 mpi_part = (
+                "# Build MPICH\n"
                 "WORKDIR /home\n"
-                "RUN wget " + mpich_dir + "/" + mpi + ".tar.gz\n"
-                "RUN tar -zxf " + mpi + ".tar.gz\n"
+                "RUN wget " + web_dir + "/" + mpi + ".tar.gz \\\n"
+                "    && tar -zxf " + mpi + ".tar.gz\n"
+                "    && rm " + mpi + ".tar.gz \n"
                 "WORKDIR /home/" + mpi + "\n"
-                "RUN ./configure --prefix=\"/home/$USER/mpich-install\n"
-                "RUN make\n"
-                "RUN make install\n"
-                "ENV PATH=$PATH:/home/$USER/mpich-install/bin\n"
-                "ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/$USER/mpich-install/lib/:/usr/local/lib\n")
+                "RUN ./configure --prefix=" + mpi_dir + " \\\n"
+                "    && make -j" + str(nproc) + " \\\n"
+                "    && make install \n"
+                "ENV PATH=$PATH:" + mpi_dir + "/bin\n"
+                "ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + mpi_dir + "/lib\n"
+                # "ENV MPI_INCLUDE_PATH=" + mpi_dir + "/include/mpich\n"
+                )
 
         elif (mpi_type == "openmpi"):
-            # Download the source from OpenMPI website and build
+            if (mpi_ver == ""):
+                # if OpenMPI version is not specified, get the precompiled version
+                mpi_part = (
+                "RUN apt-get install -y libopenmpi-dev \n"
+                # "    && rm -rf /var/lib/apt\n"
+                )
 
-            openmpi_common_top_part = (
-            "WORKDIR /home\n")
+            else:
+                # Download the source from OpenMPI website and build
+                # TODO: Check whether the version number is correct
+                # TODO: Make this works for the case where version number is of generic format!
+                #       Convert from string to a list of 3 integers
 
-            openmpi_common_bottom_part = (
-            "RUN ./configure\n"
-            "RUN make all install\n"
-            "ENV LD_LIBRARY_PATH=/usr/local/lib\n")
+                int_ver = split_version_number(mpi_ver)
+                ver_dir = "v" + str(int_ver[0]) + "." + str(int_ver[1])
+                web_dir = "https://download.open-mpi.org/release/open-mpi/" + ver_dir
 
-            openmpi_ver = mpi[8:]
+                # Note: Enable C++ binding when configuring, because some programs use it.
+                # ./configure --enable-mpi-cxx
 
-            # TODO: Check whether the version number is correct
-
-            # Directory name for OpenMPI download
-            # TODO: Make this works for the case where version number is of generic format!
-            #       Convert from string to a list of 3 integers
-            openmpi_dir = "https://download.open-mpi.org/release/open-mpi/v" + openmpi_ver[0:3]
-
-            # TODO: Check whether this file exist
-
-            openmpi_version_part = (
-            "RUN wget " + openmpi_dir + "/" + mpi + ".tar.gz\n"
-            "RUN tar -zxf " + mpi + ".tar.gz\n"
-            "WORKDIR /home/" + mpi + "\n")
-
-            mpi_part = openmpi_common_top_part + openmpi_version_part + openmpi_common_bottom_part
+                mpi_part = (
+                "# Build OpenMPI\n"
+                "WORKDIR /home\n"
+                "RUN wget " + web_dir + "/" + mpi + ".tar.gz \\\n"
+                "    && tar -zxf " + mpi + ".tar.gz \\\n"
+                "    && rm " + mpi + ".tar.gz \n"
+                "WORKDIR /home/" + mpi + "\n"
+                "RUN ./configure --enable-mpi-cxx \\\n"
+                "    && make all -j" + str(nproc) + " \\\n"
+                "    && make install\n"
+                "ENV PATH=/usr/local/bin:$PATH\n"
+                "ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH\n"
+                "ENV MPI_INCLUDE_PATH=\"/usr/local/include\"\n"
+                "ENV MPI_LIBRARIES=\"/usr/local/lib\"\n"
+                "ENV MPI_COMPILE_FLAGS=\"-I/usr/local/include -pthread\"\n" 
+                )
 
         else:
             raise ValueError("Unknown MPI target:", mpi)
 
-        docker_target = DockerClass()
-        docker_target.set_recipe_name("Dockerfile-casabase-" + mpi)
-        docker_target.set_recipe(header + base_system_part + common_top_part + mpi_part + common_bottom_part)
+        docker_target.set_recipe_name("Dockerfile-yandabase-" + mpi)
         docker_target.set_image_name(prepend + mpi + append)
 
     elif (machine == "galaxy"):
         # Galaxy (of Pawsey) has Docker image with its MPICH implementation already baked into 
         # an Ubuntu base.
-        base_system_part = ("FROM pawsey/mpi-base:latest\n")
-
-        docker_target = DockerClass()
-        docker_target.set_recipe_name("Dockerfile-casabase-" + machine)
-        docker_target.set_recipe(header + base_system_part + common_top_part + common_bottom_part)
+        base_system_part = ("FROM pawsey/mpi-base:latest as buildenv\n")
+        docker_target.set_recipe_name("Dockerfile-yandabase-" + machine)
         docker_target.set_image_name(prepend + machine + append)
 
     else:
         raise ValueError("Unknown machine target:", machine)
 
+    docker_target.set_recipe(header + base_system_part + common_top_part + mpi_part + common_bottom_part)
     docker_target.write_recipe()
+
+    # If requested, actually generate the image
     if actual:
         docker_target.build_image()
-    else:
+    else:  # Otherwise, just echo the command to generate the image
         print(docker_target.get_build_command())
 
     return docker_target
@@ -356,79 +538,53 @@ def make_final_image(machine, mpi, prepend, append, base_image, actual):
     Make the final image on top of base image.
     '''
 
-    common_bottom_part = (
-    "WORKDIR /home/yandasoft\n"
-    "RUN git pull " + git_repository + "\n"
-    "RUN ./build_all.sh -a -O \"-DHAVE_MPI=1\"\n"
-    "RUN ./build_all.sh -y -O \"-DHAVE_MPI=1\"\n"
-    "RUN ./build_all.sh -e -O \"-DHAVE_MPI=1\"\n")
+    cmake_cxx_flags = "-DCMAKE_CXX_FLAGS=\"" + MPI_COMPILE_FLAGS + "\" -DCMAKE_BUILD_TYPE=Debug "
+    # cmake_build_flags = "-DBUILD_ANALYSIS=OFF -DBUILD_PIPELINE=OFF -DBUILD_COMPONENTS=OFF -DBUILD_SERVICES=OFF"
+    cmake_build_flags = (
+    "-DIce_HOME=/usr/lib/x86_64-linux-gnu/ "
+    "-DBUILD_ANALYSIS=ON "
+    "-DBUILD_PIPELINE=ON "
+    "-DBUILD_COMPONENTS=ON "
+    "-DBUILD_ANALYSIS=ON "
+    "-DBUILD_SERVICES=OFF "
+    "-DCMAKE_CXX_FLAGS=\"-coverage\" -DCMAKE_EXE_LINKER_FLAGS=\"-coverage\" "
+    "-DCMAKE_INSTALL_PREFIX=/builds/ASKAPSDP/install"
+    )
 
-    base_part = ("FROM " + base_image + "\n")
+    common_part = (
+    "# Follow the steps here to build manually\n"
+    "FROM " + base_image + " as buildenv\n"
+    "# Remove the line that prevents git from working\n"
+    "RUN head -n -1 ~/.bashrc > temp.txt ; mv temp.txt ~/.bashrc\n"
+    "# Build yandasoft\n"
+    "WORKDIR /home\n"
+    "RUN git clone https://github.com/ATNF/all_yandasoft.git\n"
+    "WORKDIR /home/all_yandasoft\n"
+    "RUN ./git-do clone\n"
+    "RUN ./git-do checkout -b " + git_branch + "\n"
+    "RUN mkdir build\n"
+    "WORKDIR /home/all_yandasoft/build\n"
+    "RUN cmake " + cmake_cxx_compiler + " " + cmake_cxx_flags + " " + cmake_build_flags + " .. \\\n"
+    "    && make -j" + str(nproc) + " \\\n"
+    "    && make install\n"
+    "# Remove dev tools\n"
+    "RUN apt-get remove -y git \\\n"
+    "    && apt-get autoremove -y \n"
+    "WORKDIR /home/\n"
+    )
 
+    # TODO: Remove more dev tools as we want the final image to be as small as possible
+   
     if machine == "generic":
-        (mpi_type, mpi_ver) = get_mpi_type_and_version(mpi)
-
-        if (mpi_type == "mpich"):
-            if (mpi_ver == ""):
-                # if MPICH version is not specified, get the precompiled generic version
-                mpi_part = "RUN apt-get install -y mpich\n"
-
-            else:
-                # Otherwise, specific version of MPICH                
-                # Download the source from MPICH website and build from source     
-                mpich_dir = "https://www.mpich.org/static/downloads/" + mpi_ver
-
-                # TODO: Check whether the version is correct and the file exists
-
-                mpi_part = (
-                "WORKDIR /home\n"
-                "RUN wget " + mpich_dir + "/" + mpi + ".tar.gz\n"
-                "RUN tar -zxf " + mpi + ".tar.gz\n"
-                "WORKDIR /home/" + mpi + "\n"
-                "RUN ./configure --prefix=\"/home/$USER/mpich-install\n"
-                "RUN make\n"
-                "RUN make install\n"
-                "ENV PATH=$PATH:/home/$USER/mpich-install/bin\n"
-                "ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/$USER/mpich-install/lib/:/usr/local/lib\n")
-
-        elif (mpi_type == "openmpi"):
-            # Download the source from OpenMPI website and build from source
-            openmpi_common_top_part = (
-            "WORKDIR /home\n")
-
-            openmpi_common_bottom_part = (
-            "RUN ./configure\n"
-            "RUN make all install\n"
-            "ENV LD_LIBRARY_PATH=/usr/local/lib\n")
-
-            openmpi_ver = mpi[8:]
-
-            # TODO: Check whether the version number is correct
-
-            # Directory name for OpenMPI download
-            openmpi_dir = "https://download.open-mpi.org/release/open-mpi/v" + openmpi_ver[0:3]
-
-            # TODO: Check whether this file exist
-
-            openmpi_version_part = (
-            "RUN wget " + openmpi_dir + "/" + mpi + ".tar.gz\n"
-            "RUN tar -zxf " + mpi + ".tar.gz\n"
-            "WORKDIR /home/" + mpi + "\n")
-
-            mpi_part = openmpi_common_top_part + openmpi_version_part + openmpi_common_bottom_part
-
-        else:
-            raise ValueError("Unknown MPI target:", mpi)
-
         docker_target = DockerClass()
         docker_target.set_recipe_name("Dockerfile-yandasoft-" + mpi)
-        docker_target.set_recipe(header + base_part + mpi_part + common_bottom_part)
+        docker_target.set_recipe(header + common_part)
         docker_target.set_image_name(prepend + mpi + append)
 
     elif (machine == "galaxy"):
         docker_target = DockerClass()
-        docker_target.set_recipe_name("Dockerfile-yandasoft" + machine)
-        docker_target.set_recipe(header + base_part + common_bottom_part)
+        docker_target.set_recipe_name("Dockerfile-yandasoft-" + machine)
+        docker_target.set_recipe(header + common_part)
         docker_target.set_image_name(prepend + machine + append)
 
     else:
@@ -503,6 +659,7 @@ def main():
         description="Make Docker images for various MPI implementations",
         epilog="The targets can be changed from inside the script (the SETTINGS section)")
     parser.add_argument('-b', '--base_image', help='Create base image', action='store_true')
+    parser.add_argument('-d', '--dev_image', help='Create developer image', action='store_true')
     parser.add_argument('-f', '--final_image', help='Create final image', action='store_true')
     parser.add_argument('-s', '--show_targets_only', help='Show targets only', action='store_true')
     #parser.add_argument('-s', '--slurm', help='Create sample batch files for SLURM', action='store_true')
@@ -513,9 +670,11 @@ def main():
         sys.exit(0)
 
     # The common components of image names in DockerHub
-    base_prepend = "csirocass/casabase-"
+    # base_prepend = "csirocass/yandabase-"
+    base_prepend = "yandabase-"
     base_append = ":latest"
-    final_prepend = "csirocass/yandasoft-"
+    # final_prepend = "csirocass/yandasoft-"
+    final_prepend = "yandasoft-"
     final_append = ":latest"
 
     if args.base_image:
