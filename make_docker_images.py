@@ -69,7 +69,12 @@ import argparse
 import subprocess
 import re
 import os
+import platform
 from pathlib import Path
+
+# User and group names inside container
+user = "yanda-user"
+group = "yanda-group"
 
 nproc_available = os.cpu_count()
 nproc = 1
@@ -161,7 +166,11 @@ class DockerClass:
         elif (self.image_name == ""):
             raise ValueError("Docker image file name has not been set")
         else:
-            return ("docker build -t " + self.image_name + " -f " + self.recipe_name + " .")
+            # return ("docker build -t " + self.image_name + " -f " + self.recipe_name + " .")
+            return ("docker image build --build-arg USER_ID=$(id -u ${USER}) " +
+                "--build-arg GROUP_ID=$(id -g ${USER}) -t " + self.image_name + 
+                " -f " + self.recipe_name + " .")
+
          
     def build_image(self):
         '''Build the Docker image'''
@@ -278,7 +287,7 @@ def make_base_image(machine, mpi, prepend, append, actual):
     apt_install_part = (
     "ENV DEBIAN_FRONTEND=\"noninteractive\"\n"
     "RUN apt-get update \\\n"
-    "    && apt-get upgrade -y \\\n"
+    # "    && apt-get upgrade -y \\\n"
     "    && apt-get autoremove -y \\\n"
     "    && apt-get install -y"
     )
@@ -415,20 +424,33 @@ def make_base_image(machine, mpi, prepend, append, actual):
     "    && make -j" + str(nproc) + " \\\n"
     "    && make install\n"
     "# Set environment variables\n"
-    "ENV LD_LIBRARY_PATH=/home/install/lib:/usr/local/lib \n"
-    "ENV PATH=/home/install/bin:$PATH \n"
+    "ENV LD_LIBRARY_PATH=/home/" + user + "/all_yandasoft/install/lib:/usr/local/lib \n"
+    "ENV PATH=/home/" + user + "/all_yandasoft/install/bin:$PATH \n"
+    "# Switch into user and group ID on the host side\n"
+    "ARG USER_ID\n"
+    "ARG GROUP_ID\n"
+    "RUN if [ ${USER_ID:-0} -ne 0 ] && [ ${GROUP_ID:-0} -ne 0 ] ; then \\\n"
+    "    if id " + user + " ; then userdel -f " + user + " ; fi &&\\\n"
+    "    if getent group " + group + " ; then groupdel " + group + " ; fi &&\\\n"
+    "    groupadd --gid ${GROUP_ID} " + group + " &&\\\n"
+    "    useradd --no-log-init --uid ${USER_ID} --gid " + group + " " + user + " \\\n"
+    ";fi\n"
+    "WORKDIR /home/" + user + "\n"
+    "RUN chown --changes --silent --no-dereference --recursive ${USER_ID}:${GROUP_ID} /home/yanda-user \n"
+    "USER " + user + "\n"
+    "# Set up aliases in .bashrc\n"
+    "RUN echo \"alias rm=\'rm -i\'\" >> ~/.bashrc &&\\\n"                                                          
+    "    echo \"alias cp=\'cp -i\'\" >> ~/.bashrc &&\\\n"
+    "    echo \"alias mv=\'mv -i\'\" >> ~/.bashrc \n"
     "# Put start-up message in .bashrc\n"
-    "RUN echo \"echo \" >> ~/.bashrc \n"
-    "RUN echo \"echo ================================================================================\" >> ~/.bashrc \n"
-    "RUN echo \"echo Welcome to Yandabase container for developers! \" >> ~/.bashrc \n"
-    "RUN echo \"echo Version x.y.z \" >> ~/.bashrc \n"
-    "RUN echo \"echo More information: \" >> ~/.bashrc \n"
-    "RUN echo \"echo https://confluence.csiro.au/display/ASDP/Containers+for+end+users+and+developers \" >> ~/.bashrc \n"
-    "RUN echo \"echo ================================================================================\" >> ~/.bashrc \n"
-    "# Protect user from accidental git execution\n"
-    "RUN echo \"alias git=\'echo DO NOT USE GIT INSIDE CONTAINER!\'\" >> ~/.bashrc \n"
-    # TODO: Switch to normal user here
-    "WORKDIR /home/\n"
+    "RUN echo \"echo \" >> ~/.bashrc &&\\\n"
+    "    echo \"echo ================================================================================\" >> ~/.bashrc &&\\\n"
+    "    echo \"echo Welcome to Yandabase container for developers! \" >> ~/.bashrc &&\\\n"
+    "    echo \"echo Version x.y.z \" >> ~/.bashrc &&\\\n"
+    "    echo \"echo More information: \" >> ~/.bashrc &&\\\n"
+    "    echo \"echo https://confluence.csiro.au/display/ASDP/Containers+for+end+users+and+developers\" >> ~/.bashrc &&\\\n"
+    "    echo \"echo ================================================================================\" >> ~/.bashrc \n"
+    "WORKDIR /home/" + user + "/all_yandasoft \n"
     )
 
     # Construct MPI part
