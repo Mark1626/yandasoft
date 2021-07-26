@@ -1,0 +1,16 @@
+FROM 002-casacore:3.3.0
+
+ENV CASAREST_VERSION 1.7.0
+RUN mkdir /tmp/casarest-build
+WORKDIR /tmp/casarest-build
+
+RUN wget https://github.com/casacore/casarest/archive/refs/tags/v${CASAREST_VERSION}.tar.gz
+RUN tar -xvf v${CASAREST_VERSION}.tar.gz
+RUN cd casarest-${CASAREST_VERSION} && mkdir build && cd build && \
+cmake .. -DBUILD_TESTING=OFF && \
+make  && \
+make install 
+
+# RUN apt-get remove -y cmake
+# RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /tmp/casacore-build/cmake
+# RUN tar -xvf /tmp/casarest-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/casarest-build/cmake

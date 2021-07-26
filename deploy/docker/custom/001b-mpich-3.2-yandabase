@@ -1,0 +1,13 @@
+FROM 001-yandabase:1.0 as buildenv
+
+### Build MPICH ###
+ENV MPICH_VERSION=3.2
+RUN mkdir /tmp/mpich-build
+WORKDIR /tmp/mpich-build
+RUN wget http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz 
+RUN tar xvzf mpich-${MPICH_VERSION}.tar.gz 
+WORKDIR /tmp/mpich-build/mpich-${MPICH_VERSION} 
+RUN ./configure ${MPICH_CONFIGURE_OPTIONS} 
+RUN make ${MPICH_MAKE_OPTIONS} 
+RUN make install 
+RUN rm -rf /tmp/mpich-build
