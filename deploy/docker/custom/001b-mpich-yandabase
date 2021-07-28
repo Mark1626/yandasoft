@@ -1,4 +1,4 @@
-FROM 001-yandabase:1.0 as buildenv
+FROM 001-yandabase:latest as buildenv
 
 ### Build MPICH ###
 ENV MPICH_VERSION=3.2
