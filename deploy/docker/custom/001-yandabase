@@ -1,4 +1,4 @@
-FROM ubuntu:bionic as buildenv
+FROM baseimage as buildenv
 
 RUN apt-get update --fix-missing
 RUN apt-get upgrade -y

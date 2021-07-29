@@ -1,6 +1,8 @@
 FROM 002-casacore:latest
 
 ENV CASAREST_VERSION 1.7.0
+ENV CMAKE_BUILD_PARALLEL_LEVEL NUM_THREADS
+
 RUN mkdir /tmp/casarest-build
 WORKDIR /tmp/casarest-build
 
@@ -8,11 +10,13 @@ RUN wget https://github.com/casacore/casarest/archive/refs/tags/v${CASAREST_VERS
 RUN tar -xvf v${CASAREST_VERSION}.tar.gz
 RUN cd casarest-${CASAREST_VERSION} && mkdir build && cd build && \
 cmake .. -DBUILD_TESTING=OFF && \
-make  && \
+make -j $CMAKE_BUILD_PARALLEL_LEVEL && \
 make install 
 
 RUN apt-get remove -y cmake
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /tmp/cmake-build/cmake
 RUN tar -xvf /tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/cmake-build/cmake
+
+RUN apt-get install -y linux-tools-common linux-tools-generic
 
 WORKDIR /home/yanda
