@@ -6,4 +6,8 @@ RUN tar -xvf /tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/cma
 
 RUN apt-get install -y linux-tools-common linux-tools-generic vim valgrind tmux
 
+ENV PATH "$PATH:/home/yanda/build/apps"
+ENV PATH "$PATH:/tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64/bin/"
+ENV CASACORE_SW_DIR "/usr/local/share/casacore"
+
 WORKDIR /home/yanda
