@@ -1,18 +1,9 @@
 FROM 003-casarest:latest as buildenv
 
-FROM debian:bullseye
+RUN apt-get remove -y cmake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /tmp/cmake-build/cmake
+RUN tar -xvf /tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/cmake-build/cmake
 
-COPY --from=buildenv /usr/local/lib/ /usr/local/lib/
-COPY --from=buildenv /usr/local/include/ /usr/local/include
-COPY --from=buildenv /tmp/cmake-build/cmake /home/yanda/cmake
-COPY --from=buildenv /usr/lib/x86_64-linux-gnu/libboost* /usr/lib/x86_64-linux-gnu/
-COPY --from=buildenv /usr/include/boost/ /usr/include/boost/
-
-RUN apt-get update --fix-missing
-RUN apt-get upgrade -y
-RUN apt-get install    -y  g++ cmake make git
-
-# perf tools
-RUN apt-get install -y valgrind linux-perf linux-base
+RUN apt-get install -y linux-tools-common linux-tools-generic vim valgrind tmux
 
 WORKDIR /home/yanda
