@@ -85,6 +85,54 @@ endif(ENABLE_SHARED)
 
 # Yanda Packages
 # YandaSoft dependencies .. in order
+
+include(FetchContent)
+
+# Refer to https://github.com/casacore/casacore for compiling
+# FetchContent_Declare(casacore
+#     GIT_REPOSITORY git@github.com:casacore/casacore.git
+#     GIT_TAG master)
+
+# FetchContent_MakeAvailable(casacore)
+
+FetchContent_Declare(lofar-common
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-common.git
+    GIT_TAG develop)
+
+FetchContent_MakeAvailable(lofar-common)
+
+FetchContent_Declare(lofar-blob
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-blob.git
+    GIT_TAG develop)
+
+FetchContent_MakeAvailable(lofar-blob)
+
+FetchContent_Declare(base-askap
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askap.git
+    GIT_TAG develop)
+
+FetchContent_Declare(base-imagemath
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-imagemath.git
+    GIT_TAG develop)
+
+FetchContent_Declare(base-askapparallel
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askapparallel.git
+    GIT_TAG develop)
+
+FetchContent_Declare(base-scimath
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-scimath.git
+    GIT_TAG develop)
+
+FetchContent_Declare(base-accessors
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-accessors.git
+    GIT_TAG develop)
+
+FetchContent_Declare(base-components
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-components.git
+    GIT_TAG develop)
+
+FetchContent_MakeAvailable(base-askap base-imagemath base-askapparallel base-scimath base-accessors base-components)
+
 find_package(lofar-common REQUIRED)
 find_package(lofar-blob REQUIRED)
 find_package(askap-askap REQUIRED)
@@ -119,6 +167,11 @@ if (CASACORE3 OR CXX11)
 	set(CMAKE_CXX_STANDARD 11)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
+
+# Not the best way to do this
+set(CXX_PROFILE_FLAGS "-g -fno-omit-frame-pointer")
+
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PROFILE_FLAGS}")
 
 add_library(yandasoft SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/askap/askap_synthesis.cc
