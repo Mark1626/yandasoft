@@ -51,6 +51,19 @@ if (HAS_FCX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcx-limited-range")
 endif()
 
+option(ENABLE_PROFILE "Compile with debug symbols and frame pointer" NO)
+if (ENABLE_PROFILE)
+    set(CXX_PROFILE_FLAGS "-g -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PROFILE_FLAGS}")
+endif()
+
+option(ENABLE_TUNING "Enable flags for tuning" NO)
+if (ENABLE_TUNING)
+    # More to come based on analysis
+    set(CXX_TUNING_FLAGS "-march=native")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_TUNING_FLAGS}")
+endif()
+
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 option (ENABLE_SHARED "Build shared libraries" YES)
 option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
@@ -167,11 +180,6 @@ if (CASACORE3 OR CXX11)
 	set(CMAKE_CXX_STANDARD 11)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
-
-# Not the best way to do this
-set(CXX_PROFILE_FLAGS "-g -fno-omit-frame-pointer")
-
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PROFILE_FLAGS}")
 
 add_library(yandasoft SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/askap/askap_synthesis.cc
