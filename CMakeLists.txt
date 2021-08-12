@@ -85,6 +85,92 @@ endif(ENABLE_SHARED)
 
 # Yanda Packages
 # YandaSoft dependencies .. in order
+
+option (FETCH_AND_COMPILE_DEPS "Fetch and compile dependencies" NO)
+if (FETCH_AND_COMPILE_DEPS)
+    include(FetchContent)
+
+    FetchContent_Declare(lofar-common
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-common.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(lofar-common)
+    if(NOT lofar-common_POPULATED)
+        FetchContent_Populate(lofar-common)
+        add_subdirectory(${lofar-common_SOURCE_DIR} ${lofar-common_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(lofar-blob
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-blob.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(lofar-blob)
+    if(NOT lofar-blob_POPULATED)
+        FetchContent_Populate(lofar-blob)
+        add_subdirectory(${lofar-blob_SOURCE_DIR} ${lofar-blob_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-askap
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askap.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(base-askap)
+    if(NOT base-askap_POPULATED)
+        FetchContent_Populate(base-askap)
+        add_subdirectory(${base-askap_SOURCE_DIR} ${base-askap_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-imagemath
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-imagemath.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(base-imagemath)
+    if(NOT base-imagemath_POPULATED)
+        FetchContent_Populate(base-imagemath)
+        add_subdirectory(${base-imagemath_SOURCE_DIR} ${base-imagemath_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-askapparallel
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askapparallel.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(base-askapparallel)
+    if(NOT base-askapparallel_POPULATED)
+        FetchContent_Populate(base-askapparallel)
+        add_subdirectory(${base-askapparallel_SOURCE_DIR} ${base-askapparallel_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-scimath
+    GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-scimath.git
+    GIT_TAG develop)
+
+    FetchContent_GetProperties(base-scimath)
+    if(NOT base-scimath_POPULATED)
+        FetchContent_Populate(base-scimath)
+        add_subdirectory(${base-scimath_SOURCE_DIR} ${base-scimath_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-accessors
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-accessors.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(base-accessors)
+    if(NOT base-accessors_POPULATED)
+        FetchContent_Populate(base-accessors)
+        add_subdirectory(${base-accessors_SOURCE_DIR} ${base-accessors_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(base-components
+        GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-components.git
+        GIT_TAG develop)
+
+    FetchContent_GetProperties(base-components)
+    if(NOT base-components_POPULATED)
+        FetchContent_Populate(base-components)
+        add_subdirectory(${base-components_SOURCE_DIR} ${base-components_BINARY_DIR})
+    endif()
+endif()
+
 find_package(lofar-common REQUIRED)
 find_package(lofar-blob REQUIRED)
 find_package(askap-askap REQUIRED)
