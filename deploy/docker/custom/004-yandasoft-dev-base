@@ -1,5 +1,6 @@
 FROM 003-casarest:latest as buildenv
 
+RUN apt-get update --fix-missing
 RUN apt-get remove -y cmake
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /tmp/cmake-build/cmake
 RUN tar -xvf /tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/cmake-build/cmake
@@ -19,6 +20,6 @@ echo "measures.ierseop97.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.
 echo "measures.ierspredict.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
 echo "measures.tai_utc.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
 echo "measures.igrf.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
-echo "measures.observatory.directory: ${CASACORE_SW_DIR}/data/geodetic"
+echo "measures.observatory.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc
 
 WORKDIR /home/yanda
