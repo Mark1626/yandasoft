@@ -18,6 +18,11 @@ print_usage() {
   echo "-m                             Mount image on yandasoft folder"
   echo "-i <image>                     Name of the Image"
   echo "-d                             Debug Mode (enables perf)"
+  echo
+  echo "Delete previous image"
+  echo
+  echo "Options: "
+  echo "-r <version>                  Version of image to remove"
 }
 
 version=1.0
@@ -26,9 +31,11 @@ yandasoftdir="$PWD"
 build=false
 mount=false
 debug=false
+remove=false
 # mount_image="003-casarest"
 mount_image="004-yandasoft-dev-base"
 base_image="ubuntu:bionic"
+image_to_delete_version="1.0"
 num_threads="4"
 
 build_base() {
@@ -63,12 +70,20 @@ mount_yandasoft() {
   docker run --rm -it -v $yandasoftdir:/home/yanda $mount_image:$version
 }
 
+remove_images() {
+  docker rmi 001-yandabase:$image_to_delete_version
+  docker rmi 001b-mpich-yandabase:$image_to_delete_version
+  docker rmi 002-casacore:$image_to_delete_version
+  docker rmi 003-casarest:$image_to_delete_version
+  docker rmi 004-yandasoft-dev-base:$image_to_delete_version
+}
+
 if [ $# -eq 0 ]; then
   print_usage
   exit 0
 fi
 
-while getopts "bmdv:i:t:h?" opt
+while getopts "bmdr:v:i:t:h?" opt
 do
   case "$opt" in
   [h?])
@@ -83,6 +98,10 @@ do
     ;;
   m)
     mount=true
+    ;;
+  r)
+    remove=true
+    image_to_delete_version="$OPTARG"
     ;;
   i)
     mount_image="$OPTARG"
@@ -105,8 +124,11 @@ if $build ; then
   build_mpi
   build_casa
   build_dev_base
-fi
-
-if $mount ; then
+elif $mount ; then
   mount_yandasoft
+elif $remove ; then
+  remove_images
+else
+  echo "Unknown usage"
+  print_usage
 fi
