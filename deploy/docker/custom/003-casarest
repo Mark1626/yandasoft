@@ -2,6 +2,7 @@ FROM 002-casacore:latest
 
 ENV CASAREST_VERSION 1.7.0
 ENV CMAKE_BUILD_PARALLEL_LEVEL NUM_THREADS
+ENV CXXFLAGS -march=native
 
 RUN mkdir /tmp/casarest-build
 WORKDIR /tmp/casarest-build
@@ -9,6 +10,6 @@ WORKDIR /tmp/casarest-build
 RUN wget https://github.com/casacore/casarest/archive/refs/tags/v${CASAREST_VERSION}.tar.gz
 RUN tar -xvf v${CASAREST_VERSION}.tar.gz
 RUN cd casarest-${CASAREST_VERSION} && mkdir build && cd build && \
-cmake .. -DBUILD_TESTING=OFF && \
+cmake .. -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release && \
 make -j $CMAKE_BUILD_PARALLEL_LEVEL && \
 make install 
