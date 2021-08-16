@@ -353,3 +353,30 @@ endif ()
 
 include(yanda_export)
 yanda_export(askap)
+
+option (BENCHMARK "Benchmark" NO)
+if (BENCHMARK)
+    include(FetchContent)
+
+    FetchContent_Declare(googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.10.x)
+
+    FetchContent_GetProperties(googletest)
+    if(NOT googletest_POPULATED)
+        FetchContent_Populate(googletest)
+        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+    endif()
+
+    FetchContent_Declare(googlebenchmark
+                        GIT_REPOSITORY https://github.com/google/benchmark
+            )
+    
+    FetchContent_GetProperties(googlebenchmark)
+    if(NOT googlebenchmark_POPULATED)
+        FetchContent_Populate(googlebenchmark)
+        add_subdirectory(${googlebenchmark_SOURCE_DIR} ${googlebenchmark_BINARY_DIR})
+    endif()
+
+    add_subdirectory(benchmark)
+endif()
