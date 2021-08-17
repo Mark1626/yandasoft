@@ -64,6 +64,18 @@ if (ENABLE_TUNING)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_TUNING_FLAGS}")
 endif()
 
+option(ENABLE_PGO_PROFILE "Enable profile guided optimization to generate profile" NO)
+if (ENABLE_PGO_PROFILE)
+    set(CXX_PGO_ENABLE_FLAGS "-fprofile-generate=/tmp/yanda-gcc-profile")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PGO_ENABLE_FLAGS}")
+endif()
+
+option(USE_PGO_PROFILE "Use profile guided optimization" NO)
+if (USE_PGO_PROFILE)
+    set(CXX_PGO_USE_FLAGS "-fprofile-use=/tmp/yanda-gcc-profile")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PGO_USE_FLAGS}")
+endif()
+
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 option (ENABLE_SHARED "Build shared libraries" YES)
 option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
