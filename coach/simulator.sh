@@ -10,11 +10,13 @@ simulator_parset="csimulator.in"
 
 run_csimulator() {
   mkdir -p logs
-  csimulator -c $simulator_parset > "logs/csimulator-run-$(date +%y-%m-%d-%H-%M-%S)"
+  $SIMULATOR -c $simulator_parset > "logs/csimulator-run-$(date +%y-%m-%d-%H-%M-%S)"
   # echo "$SIMULATOR -c $simulator_parset > \"logs/csimulator-run-$(date +%y-%m-%d-%H-%M-%S)\""
 }
 
 sub_simulator() {
+  print_directive
+
   while getopts "c:h?" opt
   do
     case "$opt" in

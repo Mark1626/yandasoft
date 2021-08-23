@@ -18,6 +18,8 @@ run_imager() {
 }
 
 sub_imager() {
+  print_directive
+
   while getopts "c:n:h?" opt
   do
     case "$opt" in
