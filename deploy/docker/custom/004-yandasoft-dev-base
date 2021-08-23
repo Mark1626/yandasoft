@@ -25,4 +25,13 @@ echo "measures.observatory.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root
 RUN git clone https://github.com/brendangregg/FlameGraph.git /home/yanda/flamegraph
 ENV PATH "$PATH:/home/yanda/flamegraph"
 
+ifdef(`LINUX',
+ARG USER_ID
+ARG GROUP_ID
+
+RUN addgroup --gid $GROUP_ID user
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+USER user
+, )
+
 WORKDIR /home/yanda

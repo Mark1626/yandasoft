@@ -52,7 +52,12 @@ build_casa() {
 }
 
 build_dev_base() {
-  m4 -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | docker build -t 004-yandasoft-dev-base:$version -
+  if [ "$(uname)" == "Darwin" ]; then
+    m4 -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | docker build -t 004-yandasoft-dev-base:$version -
+  else
+    # This creates non root user in the Dockerfile
+    m4 -DLINUX -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | docker build -t 004-yandasoft-dev-base:$version --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -
+  fi
 }
 
 mount_yandasoft() {
@@ -67,7 +72,7 @@ mount_yandasoft() {
     fi
   fi
 
-  docker run --rm -it -v $yandasoftdir:/home/yanda $mount_image:$version
+  docker run --rm -it -v $yandasoftdir:/home/yanda/yandasoft $mount_image:$version
 }
 
 remove_images() {
