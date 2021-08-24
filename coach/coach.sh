@@ -2,15 +2,15 @@
 #
 # coach build
 # coach imager
-# coach simulate
+# coach simulator
 ProgName=$(basename $0)
 
 sub_help() {
-    echo "Usage: $ProgName <subcommand> [options]\n"
+    echo "Usage: $ProgName <subcommand> [options]"
     echo "Subcommands:"
     echo "    build Build yandasoft"
     echo "    imager Run Imager"
-    echo "    simulate Simulate dataset"
+    echo "    simulator Simulate dataset"
     echo ""
     echo "For help with each subcommand run:"
     echo "$ProgName <subcommand> -h|--help"

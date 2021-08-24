@@ -1,7 +1,7 @@
 #!/bin/bash
 # coach simulate
 help_imager() {
-  echo "Usage: $ProgName imager [options]\n"
+  echo "Usage: $ProgName imager [options]"
   echo "Options:"
   echo "    -n Number of processes to run on"
   echo "    -c Parset to use for running imager"
