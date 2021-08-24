@@ -11,16 +11,16 @@ ENV PATH "$PATH:/home/yanda/yandasoft/build/apps"
 ENV PATH "$PATH:/tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64/bin/"
 ENV CASACORE_SW_DIR "/usr/local/share/casacore"
 
-RUN echo "measures.DE200.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /root/.casarc && \
-echo "measures.DE405.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /root/.casarc && \
-echo "measures.line.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /root/.casarc && \
-echo "measures.sources.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /root/.casarc && \
-echo "measures.comet.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /root/.casarc && \
-echo "measures.ierseop97.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
-echo "measures.ierspredict.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
-echo "measures.tai_utc.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
-echo "measures.igrf.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc && \
-echo "measures.observatory.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /root/.casarc
+RUN echo "measures.DE200.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
+echo "measures.DE405.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
+echo "measures.line.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
+echo "measures.sources.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
+echo "measures.comet.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
+echo "measures.ierseop97.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /home/user/.casarc && \
+echo "measures.ierspredict.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /home/user/.casarc && \
+echo "measures.tai_utc.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /home/user/.casarc && \
+echo "measures.igrf.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /home/user/.casarc && \
+echo "measures.observatory.directory: ${CASACORE_SW_DIR}/data/geodetic" >> /home/user/.casarc
 
 RUN git clone https://github.com/brendangregg/FlameGraph.git /home/yanda/flamegraph
 ENV PATH "$PATH:/home/yanda/flamegraph"
