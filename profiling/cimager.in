@@ -1,0 +1,90 @@
+##########
+## Continuum imaging with cimager
+##
+#Standard Parameter set for Cimager
+Cimager.dataset                                 = M_DATASET
+Cimager.datacolumn                              = DATA
+Cimager.imagetype                               = fits
+#
+# No Channels selection performed
+#
+Cimager.Images.Names                            = [M_IMAGENAME]
+Cimager.Images.shape                            = [M_IMAGESIZE, M_IMAGESIZE]
+Cimager.Images.cellsize                         = [M_CELLSIZE, M_CELLSIZE]
+Cimager.Images.image.i.1934-638.beam00.direction    = [19h39m25.027, -63.42.45.61, J2000]
+# This is how many channels to write to the image - just a single one for continuum
+Cimager.Images.image.i.1934-638.beam00.nchan        = 1
+#
+# The following are needed for MFS clean
+# This one defines the number of Taylor terms
+Cimager.Images.image.i.1934-638.beam00.nterms       = 2
+# This one assigns one worker for each of the Taylor terms
+Cimager.nworkergroups                           = M_WORKERGROUPS
+# Leave 'Cimager.visweights' to be determined by Cimager, based on nterms
+# Leave 'Cimager.visweights.MFS.reffreq' to be determined by Cimager
+#
+# Options for the alternate imager
+Cimager.nchanpercore                           = M_NCHAN_PER_CORE
+Cimager.usetmpfs                               = false
+Cimager.tmpfs                                   = /dev/shm
+# barycentre and multiple solver mode not supported in continuum imaging (yet)
+Cimager.barycentre                              = false
+Cimager.solverpercore                           = false
+Cimager.nwriters                                = 1
+# New feature to reduce nFFTs from nChan to 1 and speed things up:
+Cimager.combinechannels                         = true
+#
+# This defines the parameters for the gridding.
+Cimager.gridder.snapshotimaging                 = false
+Cimager.gridder.snapshotimaging.wtolerance      = 2600
+Cimager.gridder.snapshotimaging.longtrack       = true
+Cimager.gridder.snapshotimaging.clipping        = 0.01
+Cimager.gridder                                 = WProject
+Cimager.gridder.WProject.wmax                   = 35000
+Cimager.gridder.WProject.nwplanes               = M_NWPLANES
+Cimager.gridder.WProject.oversample             = M_WSAMPLES
+Cimager.gridder.WProject.maxsupport             = 1024
+Cimager.gridder.WProject.variablesupport        = true
+Cimager.gridder.WProject.offsetsupport          = true
+Cimager.gridder.WProject.sharecf                = true
+#
+# These parameters define the clean algorithm
+Cimager.solver                                  = Clean
+Cimager.solver.Clean.solutiontype               = MAXBASE
+Cimager.solver.Clean.verbose                    = false
+Cimager.solver.Clean.decoupled                  = true
+Cimager.solver.Clean.tolerance                  = 0.01
+Cimager.solver.Clean.weightcutoff               = zero
+Cimager.solver.Clean.weightcutoff.clean         = false
+Cimager.threshold.masking                       = 0.9
+Cimager.solver.Clean.logevery                   = 50
+Cimager.solver.Clean.detectdivergence           = true
+
+Cimager.Images.writeAtMajorCycle                = false
+
+#
+Cimager.preconditioner.Names                    = [Wiener]
+Cimager.preconditioner.preservecf               = true
+Cimager.preconditioner.Wiener.robustness        = -0.5
+#
+Cimager.restore                                 = true
+Cimager.restore.beam                            = fit
+Cimager.restore.beam.cutoff                     = 0.5
+
+#
+# Parameters set for loop 0
+Cimager.threshold.majorcycle                    = 0.035mJy
+Cimager.ncycles                                 = 5
+Cimager.solver.Clean.algorithm                  = BasisfunctionMFS
+Cimager.solver.Clean.niter                      = M_CLEAN_ITER
+Cimager.threshold.minorcycle                    = [30%, 0.5mJy, 0.03mJy]
+Cimager.solver.Clean.gain                       = 0.2
+Cimager.solver.Clean.psfwidth                   = 256
+Cimager.solver.Clean.scales                     = [0,3,10]
+
+
+#
+# No self-calibration as it is the first time around the loop
+Cimager.calibrate                               = false
+
+#

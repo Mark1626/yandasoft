@@ -1,0 +1,42 @@
+# parset for csimulator: 
+# # See documentation at: https://www.atnf.csiro.au/computing/software/askapsoft/sdp/docs/current/calim/csimulator.html
+Csimulator.dataset                              =       M_DATASET
+# Csimulator.msWrittenByMaster                    =       true 
+Csimulator.stman.bucketsize                     =       1048576 #2097152
+Csimulator.stman.tilenchan                      =       1
+Csimulator.sources.definition                   =       M_MODEL
+#Csimulator.sources.casa.direction               =       [23h23m26.7s, +58.56.03.0, J2000]
+#
+Csimulator.antennas.definition                  =       M_ANTENNA_DEF
+Csimulator.feeds.definition                     =       M_FEED_DEF
+#Csimulator.spws.definition                      =       parsets/ASKAPspws.in
+# You can alternatively define the spw parameters from directly as below:
+Csimulator.spws.names                           =       [TestBand]
+Csimulator.spws.TestBand                        =       [48, 1319.129.0MHz, 1.0MHz, "XX YY XY YX"]
+Csimulator.simulation.blockage                  =       0.01
+Csimulator.simulation.elevationlimit            =       18deg
+Csimulator.simulation.autocorrwt                =       1.0
+Csimulator.simulation.usehourangles             =       True
+Csimulator.simulation.referencetime             =       [2021June27, UTC]
+Csimulator.simulation.integrationtime           =       10.0s
+Csimulator.observe.number                       =       1
+Csimulator.observe.scan0                        =       [1934-638, TestBand, -M_DURATION, M_DURATION]
+# Gridding parameters for simulations. Use similar for imaging the simulated ms-data
+Csimulator.gridder                              =       WProject
+Csimulator.gridder.padding                      =       1.
+Csimulator.gridder.WProject.wmax               =       65000
+Csimulator.gridder.WProject.nwplanes           =       999
+Csimulator.gridder.WProject.oversample         =       8
+Csimulator.gridder.WProject.diameter           =       12m
+Csimulator.gridder.WProject.blockage           =       2m
+Csimulator.gridder.WProject.maxsupport         =       1024
+Csimulator.gridder.WProject.maxfeeds           =       1
+Csimulator.gridder.WProject.frequencydependent =       true
+Csimulator.gridder.WProject.variablesupport    =       true 
+Csimulator.gridder.WProject.offsetsupport      =       true 
+# Add noise to make data more realistic
+Csimulator.noise                                =       true
+Csimulator.noise.seed1                          =       "%w"
+#Csimulator.noise.variance                      =       1.0
+Csimulator.noise.Tsys                           =       750
+Csimulator.noise.efficiency                     =       0.7 

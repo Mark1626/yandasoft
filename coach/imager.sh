@@ -13,8 +13,8 @@ imager_parset="cimager.in"
 
 run_imager() {
   mkdir -p logs
+  echo "mpirun -n $processes $IMAGER -c $imager_parset > \"logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)\""
   mpirun -n $processes $IMAGER -c $imager_parset > "logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)"
-  # echo "mpirun -n $processes $IMAGER -c $imager_parset > \"logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)\""
 }
 
 sub_imager() {

@@ -63,7 +63,12 @@ build_dev_base() {
 mount_yandasoft() {
   if $debug ; then
     if [ -e $dockerfiledir/seccomp-perf.json ] ; then
-      docker run --rm -it -v $yandasoftdir:/home/yanda/yandasoft --security-opt seccomp=$dockerfiledir/seccomp-perf.json $mount_image:$version
+      docker run --rm -it \
+      -v $yandasoftdir:/home/yanda/yandasoft \
+      -v $yandasoftdir/profile:/home/user/yandasoft-profile \
+      --name yandasoft-dev \
+      --security-opt seccomp=$dockerfiledir/seccomp-perf.json \
+      $mount_image:$version
     else
       echo 'Cannot enable perf_event_open seccomp-perf.json does not exist'
       echo "Create a seccomp-perf.json in $dockerfiledir allowing perf_event_open"
@@ -72,7 +77,11 @@ mount_yandasoft() {
     fi
   fi
 
-  docker run --rm -it -v $yandasoftdir:/home/yanda/yandasoft $mount_image:$version
+  docker run --rm -it \
+  -v $yandasoftdir:/home/yanda/yandasoft \
+  -v $yandasoftdir/profile:/home/user/yandasoft-profile \
+  --name yandasoft-dev \
+  $mount_image:$version
 }
 
 remove_images() {
