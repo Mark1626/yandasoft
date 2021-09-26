@@ -2,17 +2,17 @@ FROM 003-casarest:latest as buildenv
 
 RUN apt-get update --fix-missing
 RUN apt-get remove -y cmake
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /tmp/cmake-build/cmake
-RUN tar -xvf /tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /tmp/cmake-build/cmake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz -P /home/yanda/cmake-build/cmake
+RUN tar -xvf /home/yanda/cmake-build/cmake/cmake-3.20.3-linux-x86_64.tar.gz -C /home/yanda/cmake-build/cmake
 
 RUN apt-get install -y linux-tools-common linux-tools-generic vim valgrind tmux
 
 ENV PATH "$PATH:/home/yanda/yandasoft/build/apps"
-ENV PATH "$PATH:/tmp/cmake-build/cmake/cmake-3.20.3-linux-x86_64/bin/"
+ENV PATH "$PATH:/home/yanda/cmake-build/cmake/cmake-3.20.3-linux-x86_64/bin/"
 ENV CASACORE_SW_DIR "/usr/local/share/casacore"
 
 RUN mkdir -p /home/user && touch /home/user/.casarc
-RUN apt-get install -g libgomp1-dbg
+RUN apt-get install -y libgomp1-dbg
 
 RUN echo "measures.DE200.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
 echo "measures.DE405.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \

@@ -4,12 +4,12 @@ FROM 001-yandabase:latest as buildenv
 ENV MPICH_VERSION=3.2
 ENV CMAKE_BUILD_PARALLEL_LEVEL NUM_THREADS
 ENV CXXFLAGS -march=native
-RUN mkdir /tmp/mpich-build
-WORKDIR /tmp/mpich-build
+RUN mkdir -p /home/yanda/mpich-build
+WORKDIR /home/yanda/mpich-build
 RUN wget http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz 
 RUN tar xvzf mpich-${MPICH_VERSION}.tar.gz 
-WORKDIR /tmp/mpich-build/mpich-${MPICH_VERSION} 
+WORKDIR /home/yanda/mpich-build/mpich-${MPICH_VERSION} 
 RUN ./configure ${MPICH_CONFIGURE_OPTIONS} --disable-fortran
 RUN make ${MPICH_MAKE_OPTIONS} -j $CMAKE_BUILD_PARALLEL_LEVEL
 RUN make install 
-RUN rm -rf /tmp/mpich-build
+# RUN rm -rf /home/yanda/mpich-build

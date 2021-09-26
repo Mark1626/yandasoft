@@ -4,8 +4,8 @@ ENV CASACORE_VERSION 3.3.0
 ENV CMAKE_BUILD_PARALLEL_LEVEL NUM_THREADS
 ENV CXXFLAGS -march=native
 
-RUN mkdir /tmp/casacore-build
-WORKDIR /tmp/casacore-build
+RUN mkdir -p /home/yanda/casacore-build
+WORKDIR /home/yanda/casacore-build
 
 RUN mkdir -p /usr/local/share/casacore/data
 RUN wget ftp://ftp.astron.nl/outgoing/Measures/WSRT_Measures.ztar -P /usr/local/share/casacore/data/
@@ -13,12 +13,12 @@ RUN tar -xvf /usr/local/share/casacore/data/WSRT_Measures.ztar -C /usr/local/sha
 
 RUN wget https://github.com/casacore/casacore/archive/refs/tags/v${CASACORE_VERSION}.zip
 RUN unzip v${CASACORE_VERSION}.zip
-RUN mkdir /tmp/casacore-build/casacore-${CASACORE_VERSION}/build
+RUN mkdir /home/yanda/casacore-build/casacore-${CASACORE_VERSION}/build
 
-WORKDIR /tmp/casacore-build/casacore-${CASACORE_VERSION}/build
+WORKDIR /home/yanda/casacore-build/casacore-${CASACORE_VERSION}/build
 RUN cmake .. -DUSE_FFTW3=ON -DDATA_DIR=/usr/share/casacore/data -DUSE_OPENMP=ON \
     -DUSE_HDF5=ON -DUSE_THREADS=ON -DBUILD_TESTING=OFF -DBUILD_PYTHON=OFF -DCMAKE_BUILD_TYPE=Release
 RUN make -j $CMAKE_BUILD_PARALLEL_LEVEL
 RUN make install
 
-WORKDIR /tmp/yandasoft
+WORKDIR /home/yanda/yandasoft

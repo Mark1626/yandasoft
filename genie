@@ -25,6 +25,8 @@ print_usage() {
   echo "-r <version>                  Version of image to remove"
 }
 
+# container_engine=docker
+container_engine=podman
 version=1.0
 dockerfiledir="$PWD"/deploy/docker/custom
 yandasoftdir="$PWD"
@@ -39,31 +41,31 @@ image_to_delete_version="1.0"
 num_threads="4"
 
 build_base() {
-  m4 -Dbaseimage=$base_image $dockerfiledir/001-yandabase | docker build -t 001-yandabase:$version -
+  m4 -Dbaseimage=$base_image $dockerfiledir/001-yandabase | $container_engine build -t 001-yandabase:$version -
 }
 
 build_mpi() {
-  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/001b-mpich-yandabase | docker build -t 001b-mpich-yandabase:$version -
+  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/001b-mpich-yandabase | $container_engine build -t 001b-mpich-yandabase:$version -
 }
 
 build_casa() {
-  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/002-casacore | docker build -t 002-casacore:$version -
-  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/003-casarest | docker build -t 003-casarest:$version -
+  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/002-casacore | $container_engine build -t 002-casacore:$version -
+  m4 -DNUM_THREADS=$num_threads -Dlatest=$version $dockerfiledir/003-casarest | $container_engine build -t 003-casarest:$version -
 }
 
 build_dev_base() {
   if [ "$(uname)" == "Darwin" ]; then
-    m4 -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | docker build -t 004-yandasoft-dev-base:$version -
+    m4 -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | $container_engine build -t 004-yandasoft-dev-base:$version -
   else
     # This creates non root user in the Dockerfile
-    m4 -DLINUX -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | docker build -t 004-yandasoft-dev-base:$version --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -
+    m4 -DLINUX -Dlatest=$version $dockerfiledir/004-yandasoft-dev-base | $container_engine build -t 004-yandasoft-dev-base:$version --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -
   fi
 }
 
 mount_yandasoft() {
   if $debug ; then
     if [ -e $dockerfiledir/seccomp-perf.json ] ; then
-      docker run --rm -it \
+      $container_engine run --rm -it \
       -v $yandasoftdir:/home/yanda/yandasoft \
       -v $yandasoftdir/profile:/home/user/yandasoft-profile \
       --name yandasoft-dev \
@@ -77,7 +79,7 @@ mount_yandasoft() {
     fi
   fi
 
-  docker run --rm -it \
+  $container_engine run --rm -it \
   -v $yandasoftdir:/home/yanda/yandasoft \
   -v $yandasoftdir/profile:/home/user/yandasoft-profile \
   --name yandasoft-dev \
@@ -85,11 +87,11 @@ mount_yandasoft() {
 }
 
 remove_images() {
-  docker rmi 001-yandabase:$image_to_delete_version
-  docker rmi 001b-mpich-yandabase:$image_to_delete_version
-  docker rmi 002-casacore:$image_to_delete_version
-  docker rmi 003-casarest:$image_to_delete_version
-  docker rmi 004-yandasoft-dev-base:$image_to_delete_version
+  $container_engine rmi 001-yandabase:$image_to_delete_version
+  $container_engine rmi 001b-mpich-yandabase:$image_to_delete_version
+  $container_engine rmi 002-casacore:$image_to_delete_version
+  $container_engine rmi 003-casarest:$image_to_delete_version
+  $container_engine rmi 004-yandasoft-dev-base:$image_to_delete_version
 }
 
 if [ $# -eq 0 ]; then
