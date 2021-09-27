@@ -51,10 +51,16 @@ if (HAS_FCX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcx-limited-range")
 endif()
 
-option(ENABLE_PROFILE "Compile with debug symbols and frame pointer" NO)
+option(ENABLE_PROFILE "Compile with profile flag enabled (gprof)" NO)
 if (ENABLE_PROFILE)
-    set(CXX_PROFILE_FLAGS "-g -fno-omit-frame-pointer")
+    set(CXX_PROFILE_FLAGS "-pg")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_PROFILE_FLAGS}")
+endif()
+
+option(ENABLE_DEBUG "Compile with debug symbols and frame pointer" NO)
+if (ENABLE_DEBUG)
+    set(CXX_DEBUG_FLAGS "-g -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_DEBUG_FLAGS}")
 endif()
 
 option(ENABLE_TUNING "Enable flags for tuning" NO)
