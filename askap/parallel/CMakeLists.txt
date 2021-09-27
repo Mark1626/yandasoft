@@ -13,6 +13,7 @@ ParallelIteratorStatus.cc
 ParallelWriteIterator.cc
 SimParallel.cc
 SynParallel.cc
+ThreadImager.cc
 )
 
 install (FILES
@@ -30,5 +31,6 @@ ParallelIteratorStatus.h
 ParallelWriteIterator.h
 SimParallel.h
 SynParallel.h
+ThreadImager.hh
 DESTINATION include/askap/parallel
 )
