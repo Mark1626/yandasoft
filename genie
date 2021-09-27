@@ -36,7 +36,8 @@ debug=false
 remove=false
 # mount_image="003-casarest"
 mount_image="004-yandasoft-dev-base"
-base_image="ubuntu:bionic"
+# base_image="ubuntu:bionic"
+base_image="ubuntu:focal"
 image_to_delete_version="1.0"
 num_threads="4"
 

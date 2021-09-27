@@ -12,7 +12,7 @@ ENV PATH "$PATH:/home/yanda/cmake-build/cmake/cmake-3.20.3-linux-x86_64/bin/"
 ENV CASACORE_SW_DIR "/usr/local/share/casacore"
 
 RUN mkdir -p /home/user && touch /home/user/.casarc
-RUN apt-get install -y libgomp1-dbg
+# RUN apt-get install -y libgomp1-dbg
 
 RUN echo "measures.DE200.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
 echo "measures.DE405.directory: ${CASACORE_SW_DIR}/data/ephemerides" >> /home/user/.casarc && \
