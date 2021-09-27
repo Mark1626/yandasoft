@@ -117,7 +117,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(lofar-common
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-common.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(lofar-common)
     if(NOT lofar-common_POPULATED)
@@ -127,7 +127,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(lofar-blob
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/lofar-blob.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(lofar-blob)
     if(NOT lofar-blob_POPULATED)
@@ -137,7 +137,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-askap
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askap.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(base-askap)
     if(NOT base-askap_POPULATED)
@@ -147,7 +147,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-imagemath
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-imagemath.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(base-imagemath)
     if(NOT base-imagemath_POPULATED)
@@ -157,7 +157,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-askapparallel
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-askapparallel.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(base-askapparallel)
     if(NOT base-askapparallel_POPULATED)
@@ -167,7 +167,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-scimath
     GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-scimath.git
-    GIT_TAG develop)
+    GIT_TAG master)
 
     FetchContent_GetProperties(base-scimath)
     if(NOT base-scimath_POPULATED)
@@ -177,7 +177,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-accessors
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-accessors.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(base-accessors)
     if(NOT base-accessors_POPULATED)
@@ -187,7 +187,7 @@ if (FETCH_AND_COMPILE_DEPS)
 
     FetchContent_Declare(base-components
         GIT_REPOSITORY https://bitbucket.csiro.au/scm/askapsdp/base-components.git
-        GIT_TAG develop)
+        GIT_TAG master)
 
     FetchContent_GetProperties(base-components)
     if(NOT base-components_POPULATED)
