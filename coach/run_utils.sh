@@ -61,3 +61,26 @@ image() {
   $COACH imager -c cimager-$name.in
   cd ../../..
 }
+
+image_serial() {
+  name=$1
+
+  $(eval "sed -n '/^[ \\t]*\[$1\]/,/\[/s/^[ \\t]*\(.*\)[ \\t]*=[ \\t]*\(.*\)/export \1=\2/p' ./profiling/imager.cfg")
+  mkdir -p ./profiling/imaging/$name
+
+  m4 -DM_DATASET=$dataset \
+  -DM_IMAGENAME=$imagename \
+  -DM_IMAGESIZE=$imagesize \
+  -DM_CELLSIZE=$cellsize \
+  -DM_WORKERGROUPS=$workergroup \
+  -DM_NCHAN_PER_CORE=$nchan_per_core \
+  -DM_NWPLANES=$nwplanes \
+  -DM_WSAMPLES=$wsamples \
+  -DM_CLEAN_ITER=$clean_niter \
+  ./profiling/cimager.in > ./profiling/imaging/$name/cimager-$name.in
+
+  cd ./profiling/imaging/$name
+  echo "$COACH imager -s -c cimager-$name.in"
+  $COACH imager -s -c cimager-$name.in
+  cd ../../..
+}

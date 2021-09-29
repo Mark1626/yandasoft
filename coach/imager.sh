@@ -5,22 +5,29 @@ help_imager() {
   echo "Options:"
   echo "    -n Number of processes to run on"
   echo "    -c Parset to use for running imager"
-  echo ""
+  echo "    -s Run serial without MPI"
 }
 
 processes=4
 imager_parset="cimager.in"
+serial=false
 
-run_imager() {
+run_imager_parallel() {
   mkdir -p logs
   echo "mpirun -n $processes $IMAGER -c $imager_parset > \"logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)\""
   mpirun -n $processes $IMAGER -c $imager_parset > "logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)"
 }
 
+run_imager_serial() {
+  mkdir -p logs
+  echo "$IMAGER -c $imager_parset > \"logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)\""
+  $IMAGER -c $imager_parset > "logs/imager-run-$(date +%y-%m-%d-%H-%M-%S)"
+}
+
 sub_imager() {
   print_directive
 
-  while getopts "c:n:h?" opt
+  while getopts "c:n:sh?" opt
   do
     case "$opt" in
     [h?])
@@ -33,6 +40,9 @@ sub_imager() {
     n)
       processes="$OPTARG"
       ;;
+    s)
+      serial=true
+      ;;
     *)
       help_imager
       exit 1
@@ -40,6 +50,10 @@ sub_imager() {
     esac
   done
 
-  run_imager
+  if $serial ; then
+    run_imager_serial
+  else
+    run_imager_parallel
+  fi
 
 }
