@@ -21,12 +21,12 @@ build_dir="build"
 source $coach_dir/build.cfg
 
 run_configure() {
-  echo "cmake -B $build_dir -S $yandasoftdir -DCMAKE_BUILD_TYPE=$release -DENABLE_OPENMP=${openmp^^} \\
-     -DENABLE_PROFILE=${profile^^} -DENABLE_DEBUG=${debug^^} -DENABLE_TUNING=${tuning^^} -DBUILD_TESTING=${build_testing^^} \\ 
-     -DFETCH_AND_COMPILE_DEPS=${compile_deps^^} -DBENCHMARK=${benchmark^^} $@"
+  echo "cmake -B $build_dir -S $yandasoftdir -DCMAKE_BUILD_TYPE=$release -DENABLE_OPENMP=${openmp^^} \
+    -DENABLE_PROFILE=${profile^^} -DENABLE_DEBUG=${debug^^} -DENABLE_TUNING=${tuning^^} -DBUILD_TESTING=${build_testing^^} \
+    -DFETCH_AND_COMPILE_DEPS=${compile_deps^^} -DBENCHMARK=${benchmark^^} -DUSE_GOLD=${gold^^} $@"
   cmake -B $build_dir -S $yandasoftdir -DCMAKE_BUILD_TYPE=$release -DENABLE_OPENMP=${openmp^^} \
     -DENABLE_PROFILE=${profile^^} -DENABLE_DEBUG=${debug^^} -DENABLE_TUNING=${tuning^^} -DBUILD_TESTING=${build_testing^^} \
-    -DFETCH_AND_COMPILE_DEPS=${compile_deps^^} -DBENCHMARK=${benchmark^^} $@
+    -DFETCH_AND_COMPILE_DEPS=${compile_deps^^} -DBENCHMARK=${benchmark^^} -DUSE_GOLD=${gold^^} $@
 }
 
 run_build() {

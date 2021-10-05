@@ -51,8 +51,11 @@ if (HAS_FCX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcx-limited-range")
 endif()
 
-set(CXX_GOLD_FLAGS "-fuse-ld=gold")
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_GOLD_FLAGS}")
+option(USE_GOLD "Link with gold linker" NO)
+if (USE_GOLD)
+    set(CXX_GOLD_FLAGS "-fuse-ld=gold")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXX_GOLD_FLAGS}")
+endif()
 
 option(ENABLE_PROFILE "Compile with profile flag enabled (gprof)" NO)
 if (ENABLE_PROFILE)
