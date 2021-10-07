@@ -45,6 +45,8 @@ void run() {
     boost::shared_ptr<askap::scimath::Axes> itsAxes;
     boost::shared_ptr<casacore::Array<imtype>> itsModel;
     boost::shared_ptr<casacore::Array<imtype>> itsModelPSF;
+    boost::shared_ptr<casacore::Array<imtype>> itsModelPCF;
+    boost::shared_ptr<casacore::Array<imtype>> itsModelPSFPCF;
     boost::shared_ptr<casacore::Array<imtype>> itsModelWeights;
 
     idi = askap::accessors::IDataSharedIter(
@@ -55,16 +57,22 @@ void run() {
     ip.add("flux.i.cena", 100.0);
     ip.add("direction.ra.cena", 0.5);
     ip.add("direction.dec.cena", -0.3);
-    ip.add("shape.bmaj.cena", 0.0);
-    ip.add("shape.bmin.cena", 0.0);
-    ip.add("shape.bpa.cena", 0.0);
+    ip.add("shape.bmaj.cena", 3.42318e-05);
+    ip.add("shape.bmin.cena", 2.95504e-05);
+    ip.add("shape.bpa.cena", -0.878108);
 
     // Component Equation
     askap::synthesis::ComponentEquation ce(ip, idi);
     ce.predict();
 
-    itsWProject.reset(new askap::synthesis::WProjectVisGridder(10000.0, 9, 1e-3,
-                                                              1, 128, 0, ""));
+    itsWProject.reset(new askap::synthesis::WProjectVisGridder(
+      35000.0, // wmax
+      257, // w-planes
+      1e-3, // cutoff
+      2,// oversample
+      1024, // maxSupport
+      0, // limitSupport
+      ""));
 
     double cellSize = 10 * casacore::C::arcsec;
 
@@ -80,9 +88,19 @@ void run() {
     itsModel.reset(
         new casacore::Array<imtype>(casacore::IPosition(4, SIZE, SIZE, 1, 1)));
     itsModel->set(0.0);
+    
     itsModelPSF.reset(
         new casacore::Array<imtype>(casacore::IPosition(4, SIZE, SIZE, 1, 1)));
     itsModelPSF->set(0.0);
+    
+    itsModelPCF.reset(
+        new casacore::Array<imtype>(casacore::IPosition(4, SIZE, SIZE, 1, 1)));
+    itsModelPCF->set(0.0);
+    
+    itsModelPSFPCF.reset(
+        new casacore::Array<imtype>(casacore::IPosition(4, SIZE, SIZE, 1, 1)));
+    itsModelPSFPCF->set(0.0);
+    
     itsModelWeights.reset(
         new casacore::Array<imtype>(casacore::IPosition(4, SIZE, SIZE, 1, 1)));
     itsModelWeights->set(0.0);
@@ -99,23 +117,62 @@ void run() {
 
     itsWProject->initialiseGrid(*itsAxes, itsModel->shape(), false);
 
-    // serialize(*itsModel, "before.txt");
+    itsWProject->finaliseGrid(*itsModel);
+    serialize(*itsModel, "zeros.txt");
     itsWProject->grid(*idi);
 
     itsWProject->finaliseGrid(*itsModel);
     itsWProject->finaliseWeights(*itsModelWeights);
+    serialize(*itsModelWeights, "weights.txt");
+    serialize(*itsModel, "grid.txt");
 
-    // serialize(*itsModel, "after.txt");
-    // std::cout << std::endl;
+    itsWProject->initialiseDegrid(*itsAxes, *itsModel);
+    itsWProject->degrid(*idi);
+    itsWProject->finaliseGrid(*itsModel);
+    serialize(*itsModel, "degrid.txt");
+  
+    // Gridding with PSF
     itsWProject->initialiseGrid(*itsAxes, itsModel->shape(), true);
     itsWProject->grid(*idi);
     itsWProject->finaliseGrid(*itsModelPSF);
-    // serialize(*itsModelPSF, "final.txt");
+    serialize(*itsModelPSF, "gridpsf.txt");
+
+    itsWProject->initialiseDegrid(*itsAxes, *itsModelPSF);
+    itsWProject->degrid(*idi);
+    itsWProject->finaliseGrid(*itsModelPSF);
+    serialize(*itsModelPSF, "degridpsf.txt");
+
+    // Gridding with PCF
+    itsWProject->initialiseGrid(*itsAxes, itsModel->shape(), false, true);
+    itsWProject->grid(*idi);
+    itsWProject->finaliseGrid(*itsModelPCF);
+    serialize(*itsModelPCF, "gridpcf.txt");
+
+    itsWProject->initialiseDegrid(*itsAxes, *itsModelPCF);
+    itsWProject->degrid(*idi);
+    itsWProject->finaliseGrid(*itsModelPCF);
+    serialize(*itsModelPCF, "degridpcf.txt");
+
+    // Gridding with PCF and PSF
+    itsWProject->initialiseGrid(*itsAxes, itsModel->shape(), true, true);
+    itsWProject->grid(*idi);
+    itsWProject->finaliseGrid(*itsModelPSFPCF);
+    serialize(*itsModelPSFPCF, "gridpcf-psf.txt");
+
+    itsWProject->initialiseDegrid(*itsAxes, *itsModelPSFPCF);
+    itsWProject->degrid(*idi);
+    itsWProject->finaliseGrid(*itsModelPSFPCF);
+    serialize(*itsModelPSFPCF, "degridpcf-psf.txt");
   }
   stats.logSummary();
   stats.logMemorySummary();
 
   //askap::synthesis::SynthesisParamsHelper::saveImageParameter(ip, "test-model","test-model-image");
+}
+
+void run_degrid() {
+  // itsWProject->initialiseDegrid(*itsAxes, *itsModel);
+  // itsWProject->degrid(*idi);
 }
 
 void setup() {}
